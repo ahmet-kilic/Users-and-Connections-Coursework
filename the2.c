@@ -82,31 +82,28 @@ void connecthelper(User *user1,User *user2,long connection_time){
   cur_node = user1->connections[hash2];
 
   if((user1->connections)[hash2] == NULL){
-    user1->connections[hash2] = connection_node;
+        user1->connections[hash2] = connection_node;
+        return;
   }
-  else{
-    if (connection_time < cur_node->connection_time){
+  while(cur_node->next_connection != NULL){
+      if(cur_node->connection_time > connection_time) break;
+      cur_node = cur_node->next_connection;
+  }
+  if(cur_node->prev_connection == NULL){
       connection_node->next_connection = cur_node;
       cur_node->prev_connection = connection_node;
-      user1->connections[hash2] = connection_node;
-    }
-    else{
-      while(connection_time > cur_node->connection_time){
-        if(cur_node->next_connection == NULL){
-          connection_node->prev_connection = cur_node;
-          cur_node->next_connection = connection_node;
-          break;
-        }
-        else cur_node = cur_node->next_connection;
-      }
-      if(cur_node->next_connection != NULL){
-        connection_node->next_connection = cur_node;
-        connection_node->prev_connection = cur_node->prev_connection;
-        cur_node->prev_connection->next_connection = connection_node;
-        cur_node->prev_connection = connection_node;
-      }
-    }
+      return;
   }
+  if(cur_node->next_connection == NULL){
+      cur_node->next_connection = connection_node;
+      connection_node->prev_connection = cur_node;
+      return;
+  }
+  connection_node->next_connection = cur_node;
+  connection_node->prev_connection = cur_node->prev_connection;
+  cur_node->prev_connection->next_connection = connection_node;
+  cur_node->prev_connection = connection_node;
+  return;
 }
 
 /*
@@ -200,7 +197,7 @@ Environment *init_environment(char *user_file_name) {
     }
 
     /* Uncomment after connect_users function implemented. */
-    /*while ((read = getline(&line, &len, fp)) != -1) {
+    while ((read = getline(&line, &len, fp)) != -1) {
         line = rstrip(line);
         iter = strtok(line, sep);
         id1 = atoi(iter);
@@ -210,7 +207,7 @@ Environment *init_environment(char *user_file_name) {
         timestamp = atol(iter);
         connect_users(*environment, id1, id2, timestamp);
 
-    }*/
+    }
 
     return environment;
 
