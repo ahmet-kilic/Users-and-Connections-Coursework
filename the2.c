@@ -85,6 +85,19 @@ void connecthelper(User *user1,User *user2,long connection_time){
         user1->connections[hash2] = connection_node;
         return;
   }
+  if(cur_node->next_connection == NULL && cur_node->prev_connection == NULL){
+    if(cur_node->connection_time > connection_time){
+      connection_node->next_connection = cur_node;
+      cur_node->prev_connection = connection_node;
+      user1->connections[hash2] = connection_node;
+      return;
+    }
+    else{
+      cur_node->next_connection = connection_node;
+      connection_node->prev_connection = cur_node;
+      return;
+    }
+  }
   while(cur_node->next_connection != NULL){
       if(cur_node->connection_time > connection_time) break;
       cur_node = cur_node->next_connection;
@@ -92,11 +105,13 @@ void connecthelper(User *user1,User *user2,long connection_time){
   if(cur_node->prev_connection == NULL){
       connection_node->next_connection = cur_node;
       cur_node->prev_connection = connection_node;
+      user1->connections[hash2] = connection_node;
       return;
   }
   if(cur_node->next_connection == NULL){
-      cur_node->next_connection = connection_node;
-      connection_node->prev_connection = cur_node;
+      cur_node->prev_connection->next_connection = connection_node;
+      cur_node->prev_connection = connection_node;
+      connection_node->next_connection = cur_node;
       return;
   }
   connection_node->next_connection = cur_node;
@@ -112,8 +127,8 @@ void connecthelper(User *user1,User *user2,long connection_time){
 void connect_users(Environment environment, int id1, int id2, long connection_time) {
     /* TODO: Implement this function. */
     User *user1,*user2;
-    Connection *cur_node;
     /* HASH1 IS WRITTEN TO THE CONECTION OF USER2, HASH2 IS WRITTEN TO THE CONNECTION OIF USER1 */
+    if(get_connection(environment, id1, id2) != NULL || get_connection(environment, id2, id1) != NULL) return;
     user1 = get_user(environment, id1);
     user2 = get_user(environment, id2);
     connecthelper(user1, user2, connection_time);
@@ -225,9 +240,11 @@ Connection *get_connection(Environment environment, int id1, int id2) {
     int hash2;
     user1 = get_user(environment, id1);
     user2 = get_user(environment, id2);
+    if(user1 == NULL || user2 == NULL) return NULL;
     hash2 = hash_code(user2) % 10;
     cur_node = user1->connections[hash2];
-    while(cur_node->next_connection != NULL){
+    if(cur_node == NULL) return NULL;
+    while(cur_node != NULL){
       if(cur_node->user1 == user1 && cur_node->user2 == user2) return cur_node;
       cur_node = cur_node->next_connection;
     }
@@ -290,19 +307,16 @@ User **get_common_connections(Environment environment, User *user1, User *user2)
     int common_hash, i = 0;
     User **common_connections = malloc(sizeof(User *));
     for (common_hash = 0; common_hash < 10; common_hash++){
-      if(user1->connections[common_hash] == NULL || user2->connections[common_hash] == NULL){
-        common_connections[0] = NULL;
-        return common_connections;
-      }
+      if(user1->connections[common_hash] == NULL || user2->connections[common_hash] == NULL) continue;
       else{
         cur_node1 = user1->connections[common_hash];
         cur_node2 = user2->connections[common_hash];
-        while(cur_node1->next_connection != NULL){
-          while(cur_node2->next_connection != NULL){
+        while(cur_node1 != NULL){
+          while(cur_node2 != NULL){
             if(cur_node1->user2 == cur_node2->user2){
-              common_connections[i] = user2;
+              common_connections[i] = cur_node1->user2;
               i++;
-              common_connections = (User **) malloc(sizeof(User *) * (i+1));
+              common_connections = (User **) realloc(common_connections, sizeof(User *) * (i+1));
             }
             cur_node2 = cur_node2->next_connection;
           }
@@ -310,6 +324,7 @@ User **get_common_connections(Environment environment, User *user1, User *user2)
         }
       }
     }
+
     common_connections[i] = NULL;
     return common_connections;
 }

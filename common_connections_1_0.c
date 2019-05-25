@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "the2_copy.h"
+#include "the2.h"
 
 int main() {
     Environment* environment;
@@ -13,12 +13,17 @@ int main() {
 
     user1=get_user(*environment, 3);
     user2=get_user(*environment, 1);
+    print_connections(user1);
+    print_connections(user2);
     iter = get_common_connections(*environment, user1,user2);
 
     printf("Common connections of User[id:%d, name: %s, hash: %lu] and User[id:%d, name: %s, hash: %lu]:\n",  user1->id, user1->name, hash_code(user1),  user2->id, user2->name, hash_code(user2));
-    while(*iter!=NULL) {
+    while(1) {
+        if(*iter == NULL){
+          printf("is null");
+          break;
+        }
         printf("User[id:%d, name: %s, hash: %lu]:\n", (*iter)->id, (*iter)->name, hash_code((*iter)));
-
         iter+=1;
     }
 
